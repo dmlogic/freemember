@@ -199,6 +199,11 @@ class Freemember_lib
 
         ee()->freemember_model->update_member($member_id, $member_data);
         ee()->freemember_model->update_member_custom($member_id, $member_data);
+
+        if (ee()->extensions->active_hook('freemember_register_end')) {
+            $data = ee()->extensions->call('freemember_register_end', $member_id);
+            if (ee()->extensions->end_script) return;
+        }
     }
 
     public function update_profile()
@@ -220,6 +225,11 @@ class Freemember_lib
 
         ee()->freemember_model->update_member($member_id, $_POST);
         ee()->freemember_model->update_member_custom($member_id, $_POST);
+
+        if (ee()->extensions->active_hook('freemember_update_profile_end')) {
+            $data = ee()->extensions->call('freemember_update_profile_end', $member_id);
+            if (ee()->extensions->end_script) return;
+        }
     }
 
     /**
