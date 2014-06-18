@@ -64,7 +64,7 @@ class Freemember
     public function act_login()
     {
         self::$login_errors = ee()->freemember->login();
-        $this->_action_complete(self::$login_errors);
+        $this->_action_complete(self::$login_errors,401);
     }
 
     /**
@@ -389,8 +389,11 @@ class Freemember
 
     /**
      * After form submission, either display the errors or redirect to the return url
+     *
+     * @param mixed  $errors
+     * @param int    $errorResponseCode
      */
-    protected function _action_complete($errors = null)
+    protected function _action_complete($errors = null, $errorResponseCode = 403)
     {
         if (empty($errors)) {
             // redirect to custom url or current page
@@ -401,12 +404,41 @@ class Freemember
                 $return_url = str_replace('http://', 'https://', $return_url);
             }
 
+            if(AJAX_REQUEST) {
+                $this->_return_json(array('success' => true));
+            }
+
             ee()->functions->redirect($return_url);
         } elseif (ee()->freemember->form_param('error_handling') == 'inline') {
             return ee()->core->generate_page();
         }
 
+        if(AJAX_REQUEST) {
+
+            $return = array(
+                'success' => false,
+                'errors' => $errors,
+            );
+
+            $this->_return_json($return,$errorResponseCode);
+        }
+
         return ee()->output->show_user_error(false, $errors);
+    }
+
+    /**
+     * Output a json string with appropriate headers
+     *
+     * @param  mixed   $return   output data
+     * @param  integer $code     response code
+     * @return void
+     */
+    protected function _return_json($return,$code = 200)
+    {
+        http_response_code($code);
+        header("Content-Type: application/json");
+        echo json_encode($return);
+        exit;
     }
 
     protected function history($id)
